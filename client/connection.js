@@ -27,7 +27,7 @@ class Connection extends EventEmitter {
 
   registerListener(handler) {
     const { op, eventName } = handler;
-    if (op <= 2) {
+    if (op <= 4) {
       throw new Error("reserved OpCode " + op);
     }
     if (RESERVED_NAMES.includes(eventName)) {
@@ -50,7 +50,40 @@ class Connection extends EventEmitter {
       }
     }
   }
-
+  _setupHeartbeat() {
+    const data = Buffer.alloc(1);
+    this.lastHeartbeat = Date.now();
+    this._heartbeat = setInterval(() => {
+      if (this.lastHeartbeat && Date.now() > this.lastHeartbeat + 1000) {
+        if (this.client) {
+          this.client._ready = false;
+          this.client.state = this.shouldRetryConnect
+            ? constants.CLIENT_STATE.RECONNECTING
+            : constants.CLIENT_STATE.FAILED;
+        }
+        const willHandle = this._handleReconnect();
+        if (!willHandle) {
+          this.close();
+        }
+        this.emit(
+          "error",
+          new Error("last heartbeat over 1 second"),
+          willHandle
+        );
+      } else {
+        this.client._send(constants.OP_CODES.KEEP_ALIVE, data);
+      }
+    }, this.opts.heartbeatInterval);
+  }
+  _clearHeartbeat() {
+    if (this._heartbeat) {
+      clearInterval(this._heartbeat);
+      this._heartbeat = null;
+    }
+  }
+  _heartbeatResponse() {
+    this.lastHeartbeat = Date.now();
+  }
   connect() {
     if (this._ready) {
       throw new Error("already connected");
@@ -61,9 +94,9 @@ class Connection extends EventEmitter {
       { port: this.opts.port, host: this.opts.host },
       () => {
         if (this.state.connecting) {
-          console.log("in setter");
           const client = new Client(this.socket, this);
           client.state = constants.CLIENT_STATE.HANDSHAKE;
+
           this.client = client;
           client.on("close_internal", () => {
             this._ready = false;
@@ -93,6 +126,7 @@ class Connection extends EventEmitter {
               client.state = constants.CLIENT_STATE.CONNECTED;
               this._ready = true;
               this.state.connecting = false;
+              this._setupHeartbeat();
               this.client._ready = true;
               if (this.clientWaitQueue) {
                 client.waitQueue = this.clientWaitQueue;
@@ -111,6 +145,8 @@ class Connection extends EventEmitter {
                 client
               );
               this.wasConnected = true;
+            } else if (rawMessage.op === constants.OP_CODES.KEEP_ALIVE_ACK) {
+              this._heartbeatResponse();
             } else if (
               this._ready &&
               client.state === constants.CLIENT_STATE.CONNECTED
@@ -158,7 +194,6 @@ class Connection extends EventEmitter {
       this.emit("error", err, this._handleReconnect());
     });
     this.socket.on("close", () => {
-      this._reconnectTimeout = null;
       if (this.shouldRetryConnect) return;
       if (
         this.client &&
@@ -175,6 +210,7 @@ class Connection extends EventEmitter {
       (!this.client ||
         this.client.state === constants.CLIENT_STATE.RECONNECTING)
     ) {
+      this._clearHeartbeat();
       this._ready = false;
       this.socket.destroy();
       if (this.waitQueue === null) this.waitQueue = [];
@@ -204,6 +240,7 @@ class Connection extends EventEmitter {
   close() {
     delete this.version;
     delete this.method;
+    this._clearHeartbeat();
     this._ready = false;
     this.shouldRetryConnect = false;
     if (this.client) {
@@ -222,11 +259,17 @@ class Connection extends EventEmitter {
   }
 }
 
-module.exports = (host, port, autoReconnect = true) => {
+module.exports = (
+  host,
+  port,
+  options,
+) => {
+  const opts = options || {};
   return new Connection({
     host,
     port: typeof port === "string" ? Number.parseInt(port) : port,
     version: 1,
-    autoReconnect,
+    ...constants.DEFAULT_CLIENT_OPTS,
+    ...opts,
   });
 };

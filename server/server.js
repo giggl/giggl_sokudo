@@ -25,7 +25,7 @@ class Server extends EventEmitter {
 
   registerListener(handler) {
     const { op, eventName } = handler;
-    if (op <= 2) {
+    if (op <= 4) {
       throw new Error("reserved OpCode " + op);
     }
     if (RESERVED_NAMES.includes(eventName)) {
@@ -111,10 +111,9 @@ class Server extends EventEmitter {
       }
       this._cleanupClient(client);
     });
-    socket.on("error", error => {
-        this.emit("error", error);
-        
-    })
+    socket.on("error", (error) => {
+      this.emit("error", error);
+    });
     client.on("close_internal", () => {
       client._ready = false;
       client.state = constants.CLIENT_STATE.DISCONNECTING;
@@ -153,6 +152,8 @@ class Server extends EventEmitter {
           const error = packError(1, "non handhake during handshake");
           client._send(constants.OP_CODES.ERROR, error);
         }
+      } else if (rawMessage.op === constants.OP_CODES.KEEP_ALIVE_ACK) {
+        client._send(constants.OP_CODES.KEEP_ALIVE_ACK, rawMessage.data);
       } else if (client.state === constants.CLIENT_STATE.CONNECTED) {
         for (const message of messages) {
           const handler = this.state.handlers[message.op];

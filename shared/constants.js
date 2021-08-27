@@ -2,6 +2,8 @@ const OP_CODES = {
   HANDSHAKE: 0,
   HANDSHAKE_ACK: 1,
   ERROR: 2,
+  KEEP_ALIVE: 3,
+  KEEP_ALIVE_ACK: 4,
 };
 const CLIENT_STATE = {
   IDLE: 0,
@@ -21,6 +23,7 @@ const DEFAULT_SERVER_PROPS = {
   version: 1,
   methods: { ...METHODS },
 };
+const DEFAULT_CLIENT_OPTS = { autoReconnect: true, heartbeatInterval: 500 }
 const RESERVED_NAMES = [
   "error",
   "client_close",
@@ -36,4 +39,5 @@ module.exports = {
   METHODS,
   DEFAULT_SERVER_PROPS,
   RESERVED_NAMES,
+  DEFAULT_CLIENT_OPTS
 };
