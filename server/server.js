@@ -25,7 +25,8 @@ class Server extends EventEmitter {
 
   registerListener(handler) {
     const { op, eventName } = handler;
-    if (op <= 4) {
+    const maxOpCode = Math.max.apply(this, Object.values(constants.OP_CODES));
+    if (op <= maxOpCode) {
       throw new Error("reserved OpCode " + op);
     }
     if (RESERVED_NAMES.includes(eventName)) {
