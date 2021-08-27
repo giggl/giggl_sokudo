@@ -50,19 +50,20 @@ app.on("client_close", (client) => {
 });
 app.on("error", (err) => {
   //  console.log("server client closed");
-  });
+});
 const indexes = {};
 app.on("test_event", (unpacked, seq, client) => {
   indexes[unpacked.index] = 1;
- // console.log(unpacked, seq);
-if(seq % 5 === 0) {
-    
+  if (unpacked.index % 1000 === 0) {
+    console.log(unpacked, seq);
+  }
+  if (seq % 5 === 0) {
     client.send(TEST_OPS.MOUSE_MOVE, {
-        x: 123,
-        y: 456,
-        index: unpacked.index,
-      });
-}
+      x: 123,
+      y: 456,
+      index: unpacked.index,
+    });
+  }
 
   //   client.close();
   // client.send(6, {
@@ -73,18 +74,17 @@ if(seq % 5 === 0) {
 // client
 
 if (process.env.SERVER) {
-  app.listen(3015).then(res => {
-      console.log("server ready")
-  })
-
+  app.listen(3015).then((res) => {
+    console.log("server ready");
+  });
 } else {
   const client = Client("192.168.178.39", 3015, {
-      autoReconnect: true
+    autoReconnect: true,
   });
   client.useHandler(testHandler);
   client.useHandler(testHandler2);
   client.on("error", (err, willRetry) => {
-     console.log(err, willRetry);
+    console.log(err, willRetry);
   });
   for (let index = 0; index < 6; index++) {
     client.send(TEST_OPS.TEXT_TEST, {
@@ -135,7 +135,7 @@ if (process.env.SERVER) {
         index: index + 1,
       });
       index++;
-    }, 2);
+    });
   });
   client.connect();
 }
