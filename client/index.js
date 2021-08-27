@@ -18,13 +18,13 @@ class Connection extends EventEmitter {
     this.client = null;
     this._ready = false;
     this._reconnectTimeout = null;
-    this.reconnectFunc - null;
+    this._reconnectFunc = null;
+    this._heartbeat = null;
   }
 
-  registerListener(handler) {
+  useHandler(handler) {
     const { op, eventName } = handler;
-    const maxOpCode = Math.max.apply(this, Object.values(constants.OP_CODES));
-    if (op <= maxOpCode) {
+    if (op < Object.keys(constants.OP_CODES).length) {
       throw new Error("reserved OpCode " + op);
     }
     if (RESERVED_NAMES.includes(eventName)) {
@@ -48,6 +48,7 @@ class Connection extends EventEmitter {
     }
   }
   _setupHeartbeat() {
+    this._clearHeartbeat();
     const data = Buffer.alloc(1);
     this.lastHeartbeat = Date.now();
     this._heartbeat = setInterval(() => {
@@ -77,7 +78,7 @@ class Connection extends EventEmitter {
     }, this.opts.heartbeatInterval);
   }
   _clearHeartbeat() {
-    if (this._heartbeat) {
+    if (this._heartbeat !== null) {
       clearInterval(this._heartbeat);
       this._heartbeat = null;
       this.lastHeartbeat = null;
@@ -96,7 +97,7 @@ class Connection extends EventEmitter {
       client._processWaitQueue();
       this.clientWaitQueue = null;
     }
-    if (this.waitQueue.length) {
+    if (this.opts.replay && this.waitQueue.length) {
       for (const entry of this.waitQueue)
         client.send(entry.opcode, entry.message);
       this.waitQueue = null;
@@ -191,16 +192,6 @@ class Connection extends EventEmitter {
       }
     );
     this.socket.setNoDelay();
-    // when i disabled my wifi it took over 30 seconds for a error event to be thrown,
-    // which is to slow. so this will trigger this faster
-    if (this.shouldRetryConnect && this._reconnectTimeout === null) {
-      this._reconnectTimeout = setTimeout(() => {
-        this._reconnectTimeout = null;
-        if (this.shouldRetryConnect && !this._ready) {
-          this._handleReconnect();
-        }
-      }, 50);
-    }
     this.socket.on("error", (err) => {
       if (this.client) {
         this.client._ready = false;
@@ -211,10 +202,19 @@ class Connection extends EventEmitter {
       this.emit("error", err, this._handleReconnect());
     });
     this.socket.on("close", () => {
-      if (this.shouldRetryConnect) return;
+      if (this.client) {
+        this.client._ready = false;
+        this.client.state = this.shouldRetryConnect
+          ? constants.CLIENT_STATE.RECONNECTING
+          : constants.CLIENT_STATE.DISCONNECTING;
+      }
+      if (this.shouldRetryConnect) {
+        this._handleReconnect();
+        return;
+      }
       if (
         this.client &&
-        this.client.state === constants.CLIENT_STATE.CONNECTED
+        this.client.state === constants.CLIENT_STATE.DISCONNECTING
       ) {
         this.close();
       }
@@ -225,8 +225,9 @@ class Connection extends EventEmitter {
     this._clearHeartbeat();
     this._ready = false;
     this.socket.destroy();
-    if (this.waitQueue === null) this.waitQueue = [];
+    if (this.opts.replay && this.waitQueue === null) this.waitQueue = [];
     if (
+      this.opts.replay &&
       this.client !== null &&
       this.client.waitQueue !== null &&
       this.client.waitQueue.length
@@ -263,8 +264,14 @@ class Connection extends EventEmitter {
   }
 
   send(opcode, message) {
-    if (this.client === null || !this.client._ready) {
-      this.waitQueue.push({ opcode, message });
+    if (
+      this.client === null ||
+      (!this.client._ready &&
+        this.client.state !== constants.CLIENT_STATE.DISCONNECTED &&
+        this.client.state !== constants.CLIENT_STATE.FAILED)
+    ) {
+      if (!this.wasConnected || this.opts.replay)
+        this.waitQueue.push({ opcode, message });
       return;
     }
     this.client.send(opcode, message);

@@ -1,12 +1,16 @@
 {
-  "name": "llserver",
+  "name": "@giggl/sokudo",
   "version": "1.0.0",
   "description": "",
+  "url": "https://github.com/giggl/giggl_sokudo",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  }
 }
