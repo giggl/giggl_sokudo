@@ -48,6 +48,9 @@ app.useHandler(testHandler2);
 app.on("client_close", (client) => {
   console.log("server client closed");
 });
+app.on("err", (err) => {
+  //  console.log("server client closed");
+  });
 const indexes = {};
 app.on("test_event", (unpacked, seq, client) => {
   indexes[unpacked.index] = 1;
@@ -72,7 +75,7 @@ if (process.env.SERVER) {
   })
 
 } else {
-  const client = Client("localhost", 3015, {
+  const client = Client("192.168.178.39", 3015, {
       autoReconnect: true
   });
   client.useHandler(testHandler);
@@ -129,7 +132,7 @@ if (process.env.SERVER) {
         index: index + 1,
       });
       index++;
-    }, 25);
+    }, 2);
   });
   client.connect();
 }

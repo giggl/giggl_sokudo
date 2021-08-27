@@ -196,7 +196,6 @@ class Connection extends EventEmitter {
     // which is to slow. so this will trigger this faster
     if (this.shouldRetryConnect && this._reconnectTimeout === null) {
       this._reconnectTimeout = setTimeout(() => {
-        console.log("setting tt");
         this._reconnectTimeout = null;
         if (this.shouldRetryConnect && !this._ready) {
           this._handleReconnect();
@@ -281,7 +280,6 @@ class Connection extends EventEmitter {
         this.client.state !== constants.CLIENT_STATE.DISCONNECTED &&
         this.client.state !== constants.CLIENT_STATE.FAILED)
     ) {
-      if (this.client) console.log(this.client.state);
       if (!this.wasConnected || this.opts.replay)
         this.waitQueue.push({ opcode, message });
       return;
