@@ -12,9 +12,6 @@ jobs:
           node-version: '16.x'
           registry-url: 'https://npm.pkg.github.com'
 
-      - name: Install deps and build (with cache)
-        uses: bahmutov/npm-install@v1
-
       - id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
 
