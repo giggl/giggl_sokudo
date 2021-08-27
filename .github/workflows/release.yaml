@@ -1,0 +1,27 @@
+name: Release Package
+on:
+  release:
+    types: [created]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.x'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Install deps and build (with cache)
+        uses: bahmutov/npm-install@v1
+
+      - id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+
+      - run: |
+          echo Using version ${{ steps.get_version.outputs.VERSION }}
+          node version.js ${{ steps.get_version.outputs.VERSION }}
+
+      - run: yarn publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
