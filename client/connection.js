@@ -14,7 +14,6 @@ class Connection extends EventEmitter {
       handlers: {},
     };
     this.waitQueue = [];
-    this.connectCount = 0;
     this.shouldRetryConnect = opts.autoReconnect;
     this.client = null;
     this._ready = false;
@@ -51,7 +50,11 @@ class Connection extends EventEmitter {
     const data = Buffer.alloc(1);
     this.lastHeartbeat = Date.now();
     this._heartbeat = setInterval(() => {
-      if (this.lastHeartbeat && Date.now() > this.lastHeartbeat + 1000) {
+      if (
+        this.lastHeartbeat &&
+        this._ready &&
+        Date.now() > this.lastHeartbeat + 1000
+      ) {
         if (this.client) {
           this.client._ready = false;
           this.client.state = this.shouldRetryConnect
@@ -76,12 +79,16 @@ class Connection extends EventEmitter {
     if (this._heartbeat) {
       clearInterval(this._heartbeat);
       this._heartbeat = null;
+      this.lastHeartbeat = null;
     }
   }
   _heartbeatResponse() {
     this.lastHeartbeat = Date.now();
   }
   _maybeReplayEvents() {
+    /*
+      should there be events to pre sent, process them first.
+      */
     const client = this.client;
     if (this.clientWaitQueue) {
       client.waitQueue = this.clientWaitQueue;
@@ -98,7 +105,6 @@ class Connection extends EventEmitter {
     if (this._ready) {
       throw new Error("already connected");
     }
-    this.connectCount++;
     this.state.connecting = true;
     this.socket = net.createConnection(
       { port: this.opts.port, host: this.opts.host },
@@ -126,18 +132,18 @@ class Connection extends EventEmitter {
               const { version, method } = parseHandhakeResponse(
                 rawMessage.data
               );
+              // we are connected, make sure the reconnect timeouts arent active and possibly overwrite the connection
               if (this._reconnectTimeout !== null) {
                 clearInterval(this._reconnectTimeout);
                 this._reconnectTimeout = null;
               }
-              if (this.reconnectFunc !== null) {
-                clearInterval(this.reconnectFunc);
-                this.reconnectFunc = null;
+              if (this._reconnectFunc !== null) {
+                clearInterval(this._reconnectFunc);
+                this._reconnectFunc = null;
               }
-              //Props
+              //Props to set
               this.version = version;
               this.method = method;
-              console.log(method)
               client.method = { n: method };
               client.state = constants.CLIENT_STATE.CONNECTED;
               this._ready = true;
@@ -147,23 +153,20 @@ class Connection extends EventEmitter {
               //funcs
               this._setupHeartbeat();
               this._maybeReplayEvents();
-              this.emit(
-                this.connectCount > 1 && this.wasConnected
-                  ? "reconnect"
-                  : "ready",
-                client
-              );
+              this.emit(this.wasConnected ? "reconnect" : "ready", client);
               this.wasConnected = true;
-            } else if (rawMessage.op === constants.OP_CODES.KEEP_ALIVE_ACK) {
-              this._heartbeatResponse();
             } else if (
               this._ready &&
               client.state === constants.CLIENT_STATE.CONNECTED
             ) {
+              // we only want to know we got a message, it doesnt have to be a heartbeat
+              this._heartbeatResponse();
               for (const message of messages) {
+                if (message.op === constants.OP_CODES.KEEP_ALIVE_ACK) continue;
+
                 const handler = this.state.handlers[message.op];
                 if (!handler) {
-                  throw new Error("unhandled op " + message.op);
+                  this.emit("error", new Error("unhandled op " + message.op));
                 }
                 const parsed = handler.unpacker(
                   message.data,
@@ -173,25 +176,29 @@ class Connection extends EventEmitter {
                 this.emit(handler.eventName, parsed, message.seq);
               }
             } else {
-              throw new Error(
-                "received message in faulty state " + client.state
+              this.emit(
+                "error",
+                new Error("received message in faulty state " + client.state)
               );
             }
           });
           //send handshake
           this._sendHandshake();
         } else {
-          throw new Error("fired connect in faulty state" + this.state);
+          this.emit(new Error("fired connect in non ready state"));
         }
       }
     );
+    this.socket.setNoDelay();
+    // when i disabled my wifi it took over 30 seconds for a error event to be thrown,
+    // which is to slow. so this will trigger this faster
     if (this.shouldRetryConnect && this._reconnectTimeout === null) {
       this._reconnectTimeout = setTimeout(() => {
         this._reconnectTimeout = null;
         if (this.shouldRetryConnect && !this._ready) {
           this._handleReconnect();
         }
-      }, 500);
+      }, 50);
     }
     this.socket.on("error", (err) => {
       if (this.client) {
@@ -227,7 +234,7 @@ class Connection extends EventEmitter {
     this.client = null;
     this.socket = null;
     this.connect();
-    this.reconnectFunc = null;
+    this._reconnectFunc = null;
   }
   _handleReconnect() {
     if (
@@ -235,15 +242,18 @@ class Connection extends EventEmitter {
       (!this.client ||
         this.client.state === constants.CLIENT_STATE.RECONNECTING)
     ) {
-      if (this.reconnectFunc === null) {
+      if (this._reconnectTimeout) {
+        clearTimeout(this._reconnectTimeout);
+        this._reconnectTimeout = null;
+      }
+      if (this._reconnectFunc === null) {
         if (!this.firstReconnect) {
-            this.firstReconnect = true;
+          this.firstReconnect = true;
+          this._doReconnect();
+        } else
+          this._reconnectFunc = setTimeout(() => {
             this._doReconnect();
-        }
-        else
-          this.reconnectFunc = setTimeout(() => {
-            this._doReconnect();
-          }, 250);
+          }, 50);
       }
 
       return true;

@@ -23,7 +23,7 @@ const DEFAULT_SERVER_PROPS = {
   version: 1,
   methods: { ...METHODS },
 };
-const DEFAULT_CLIENT_OPTS = { autoReconnect: true, heartbeatInterval: 500 }
+const DEFAULT_CLIENT_OPTS = { autoReconnect: true, heartbeatInterval: 250 };
 const RESERVED_NAMES = [
   "error",
   "client_close",
@@ -31,7 +31,7 @@ const RESERVED_NAMES = [
   "client_ready",
   "ready",
   "close_internal",
-  'reconnect'
+  "reconnect",
 ];
 module.exports = {
   OP_CODES,
@@ -39,5 +39,5 @@ module.exports = {
   METHODS,
   DEFAULT_SERVER_PROPS,
   RESERVED_NAMES,
-  DEFAULT_CLIENT_OPTS
+  DEFAULT_CLIENT_OPTS,
 };

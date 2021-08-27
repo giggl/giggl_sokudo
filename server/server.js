@@ -101,6 +101,7 @@ class Server extends EventEmitter {
 
   _handleIncomingConnection(socket) {
     const client = new Client(socket, this);
+    socket.setNoDelay();
     client.state = constants.CLIENT_STATE.HANDSHAKE;
     socket.on("close", () => {
       if (

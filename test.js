@@ -69,28 +69,27 @@ app.on("test_event", (unpacked, seq, client) => {
 });
 // client
 
-
 const client = Client("192.168.178.39", 3015);
 client.registerListener(testHandler);
 client.registerListener(testHandler2);
-client.on('error', (err, willRetry) => {
-    console.log(err, willRetry)
-})
+client.on("error", (err, willRetry) => {
+  // console.log(err, willRetry);
+});
 let index = 0;
 setInterval(() => {
-    client.send(TEST_OPS.TEXT_TEST, {
-        message: `this will ${
-          index % 5 === 0
-            ? Array(32000)
-                .fill()
-                .map(() => "a")
-                .join("")
-            : ""
-        } be queued before ready ${index + 1}`,
-        index: index + 1,
-      });
-      index++;
-}, 2)
+  client.send(TEST_OPS.TEXT_TEST, {
+    message: `this will ${
+      index % 5 === 0
+        ? Array(32000)
+            .fill()
+            .map(() => "a")
+            .join("")
+        : ""
+    } be queued before ready ${index + 1}`,
+    index: index + 1,
+  });
+  index++;
+}, 25);
 const c = [];
 client.on("mouse_event", (data, seq) => {
   c.push({
@@ -102,6 +101,9 @@ client.on("mouse_event", (data, seq) => {
 client.on("close", () => {
   console.log("client fired close");
   // client.send(TEST_OPS.TEXT_TEST, "how are you")
+});
+client.on("reconnect", () => {
+  console.log("reconnected!");
 });
 client.on("ready", () => {
   console.log("client emitted ready");

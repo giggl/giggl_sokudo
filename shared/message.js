@@ -1,5 +1,10 @@
 // base buffer writers parsers
 const parseMessage = (buffer, offset = 0) => {
+  /*
+ For the case that a message is split between two tcp frames,
+ we need to be able to recognise that and handle it by caching the buffer and the start of the messsage
+ and parse it with the next tcp frame.
+*/
   if (buffer.length < 11) return null;
   const messages = [];
   while (offset < buffer.length) {
