@@ -124,14 +124,14 @@ if (process.env.SERVER) {
     let index = 0;
     setInterval(() => {
       client.send(TEST_OPS.TEXT_TEST, {
-        message: `this will ${
+        message: `${
           index % 5 === 0
-            ? Array(32)
+            ? Array(15)
                 .fill()
-                .map(() => "a")
+                .map(() => "A")
                 .join("")
             : ""
-        } be queued before ready ${index + 1}`,
+        } ${index + 1}`,
         index: index + 1,
       });
       index++;
