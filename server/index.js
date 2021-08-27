@@ -25,7 +25,7 @@ class Server extends EventEmitter {
 
   useHandler(handler) {
     const { op, eventName } = handler;
-    if (op <= Object.keys(constants.OP_CODES).length) {
+    if (op < Object.keys(constants.OP_CODES).length) {
       throw new Error("reserved OpCode " + op);
     }
     if (RESERVED_NAMES.includes(eventName)) {

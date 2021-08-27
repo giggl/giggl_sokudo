@@ -73,7 +73,7 @@ if (process.env.SERVER) {
 
 } else {
   const client = Client("localhost", 3015, {
-      autoReconnect: false
+      autoReconnect: true
   });
   client.useHandler(testHandler);
   client.useHandler(testHandler2);
@@ -129,7 +129,7 @@ if (process.env.SERVER) {
         index: index + 1,
       });
       index++;
-    }, 2000);
+    }, 25);
   });
   client.connect();
 }
