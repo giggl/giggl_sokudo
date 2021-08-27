@@ -152,10 +152,12 @@ class Server extends EventEmitter {
           const error = packError(1, "non handhake during handshake");
           client._send(constants.OP_CODES.ERROR, error);
         }
-      } else if (rawMessage.op === constants.OP_CODES.KEEP_ALIVE) {
-        client._send(constants.OP_CODES.KEEP_ALIVE_ACK, rawMessage.data);
       } else if (client.state === constants.CLIENT_STATE.CONNECTED) {
         for (const message of messages) {
+            if(message.op === constants.OP_CODES.KEEP_ALIVE) {
+                client._send(constants.OP_CODES.KEEP_ALIVE_ACK, rawMessage.data);
+                continue;
+            }
           const handler = this.state.handlers[message.op];
           if (!handler) {
             throw new Error("received unhandeled op" + message.op);

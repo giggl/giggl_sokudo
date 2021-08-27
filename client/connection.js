@@ -3,11 +3,7 @@ const EventEmitter = require("events");
 
 const Client = require("../shared/client");
 const constants = require("../shared/constants");
-const {
-  parseMessage,
-  packHandshake,
-  parseHandhakeResponse,
-} = require("../shared/message");
+const { packHandshake, parseHandhakeResponse } = require("../shared/message");
 const RESERVED_NAMES = constants.RESERVED_NAMES;
 class Connection extends EventEmitter {
   constructor(opts) {
@@ -23,6 +19,7 @@ class Connection extends EventEmitter {
     this.client = null;
     this._ready = false;
     this._reconnectTimeout = null;
+    this.reconnectFunc - null;
   }
 
   registerListener(handler) {
@@ -84,6 +81,19 @@ class Connection extends EventEmitter {
   _heartbeatResponse() {
     this.lastHeartbeat = Date.now();
   }
+  _maybeReplayEvents() {
+    const client = this.client;
+    if (this.clientWaitQueue) {
+      client.waitQueue = this.clientWaitQueue;
+      client._processWaitQueue();
+      this.clientWaitQueue = null;
+    }
+    if (this.waitQueue.length) {
+      for (const entry of this.waitQueue)
+        client.send(entry.opcode, entry.message);
+      this.waitQueue = null;
+    }
+  }
   connect() {
     if (this._ready) {
       throw new Error("already connected");
@@ -120,24 +130,23 @@ class Connection extends EventEmitter {
                 clearInterval(this._reconnectTimeout);
                 this._reconnectTimeout = null;
               }
+              if (this.reconnectFunc !== null) {
+                clearInterval(this.reconnectFunc);
+                this.reconnectFunc = null;
+              }
+              //Props
               this.version = version;
               this.method = method;
+              console.log(method)
               client.method = { n: method };
               client.state = constants.CLIENT_STATE.CONNECTED;
               this._ready = true;
               this.state.connecting = false;
-              this._setupHeartbeat();
               this.client._ready = true;
-              if (this.clientWaitQueue) {
-                client.waitQueue = this.clientWaitQueue;
-                client._processWaitQueue();
-                this.clientWaitQueue = null;
-              }
-              if (this.waitQueue.length) {
-                for (const entry of this.waitQueue)
-                  client.send(entry.opcode, entry.message);
-                this.waitQueue = null;
-              }
+              this.firstReconnect = false;
+              //funcs
+              this._setupHeartbeat();
+              this._maybeReplayEvents();
               this.emit(
                 this.connectCount > 1 && this.wasConnected
                   ? "reconnect"
@@ -204,25 +213,38 @@ class Connection extends EventEmitter {
     });
   }
 
+  _doReconnect() {
+    this._clearHeartbeat();
+    this._ready = false;
+    this.socket.destroy();
+    if (this.waitQueue === null) this.waitQueue = [];
+    if (
+      this.client !== null &&
+      this.client.waitQueue !== null &&
+      this.client.waitQueue.length
+    )
+      this.clientWaitQueue = this.client.waitQueue;
+    this.client = null;
+    this.socket = null;
+    this.connect();
+    this.reconnectFunc = null;
+  }
   _handleReconnect() {
     if (
       this.shouldRetryConnect &&
       (!this.client ||
         this.client.state === constants.CLIENT_STATE.RECONNECTING)
     ) {
-      this._clearHeartbeat();
-      this._ready = false;
-      this.socket.destroy();
-      if (this.waitQueue === null) this.waitQueue = [];
-      if (
-        this.client !== null &&
-        this.client.waitQueue !== null &&
-        this.client.waitQueue.length
-      )
-        this.clientWaitQueue = this.client.waitQueue;
-      this.client = null;
-      this.socket = null;
-      this.connect();
+      if (this.reconnectFunc === null) {
+        if (!this.firstReconnect) {
+            this.firstReconnect = true;
+            this._doReconnect();
+        }
+        else
+          this.reconnectFunc = setTimeout(() => {
+            this._doReconnect();
+          }, 250);
+      }
 
       return true;
     }
@@ -230,7 +252,7 @@ class Connection extends EventEmitter {
   }
 
   send(opcode, message) {
-    if (this.client === null) {
+    if (this.client === null || !this.client._ready) {
       this.waitQueue.push({ opcode, message });
       return;
     }
@@ -259,11 +281,7 @@ class Connection extends EventEmitter {
   }
 }
 
-module.exports = (
-  host,
-  port,
-  options,
-) => {
+module.exports = (host, port, options) => {
   const opts = options || {};
   return new Connection({
     host,

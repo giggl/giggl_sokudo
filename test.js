@@ -90,7 +90,7 @@ setInterval(() => {
         index: index + 1,
       });
       index++;
-}, 2000)
+}, 2)
 const c = [];
 client.on("mouse_event", (data, seq) => {
   c.push({
@@ -104,7 +104,7 @@ client.on("close", () => {
   // client.send(TEST_OPS.TEXT_TEST, "how are you")
 });
 client.on("ready", () => {
-  console.log("sending to server");
+  console.log("client emitted ready");
   client.send(TEST_OPS.TEXT_TEST, {
     message: "how are you",
     index: -1,
