@@ -29,7 +29,6 @@ Trace:
 npm manifest: 
   {
     "name": "@giggl/sokudo",
-    "version": "1.0.0",
     "description": "",
     "url": "https://github.com/giggl/giggl_sokudo",
     "main": "index.js",
@@ -41,7 +40,8 @@ npm manifest:
     "license": "ISC",
     "publishConfig": {
       "registry": "https://npm.pkg.github.com/"
-    }
+    },
+    "version": "1.0.0"
   }
 
 yarn manifest: 

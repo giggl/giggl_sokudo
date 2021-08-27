@@ -9,6 +9,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "repository": "https://github.com/giggl/giggl_sokudo",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
