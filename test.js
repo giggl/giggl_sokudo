@@ -54,12 +54,15 @@ app.on("error", (err) => {
 const indexes = {};
 app.on("test_event", (unpacked, seq, client) => {
   indexes[unpacked.index] = 1;
-  console.log(unpacked, seq);
-  client.send(TEST_OPS.MOUSE_MOVE, {
-    x: 123,
-    y: 456,
-    index: unpacked.index,
-  });
+ // console.log(unpacked, seq);
+if(seq % 5 === 0) {
+    
+    client.send(TEST_OPS.MOUSE_MOVE, {
+        x: 123,
+        y: 456,
+        index: unpacked.index,
+      });
+}
 
   //   client.close();
   // client.send(6, {
