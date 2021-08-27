@@ -68,44 +68,46 @@ app.on("test_event", (unpacked, seq, client) => {
   // })
 });
 // client
-app.listen(3015, "localhost").then(() => {
-  const client = Client("localhost", 3015);
-  client.registerListener(testHandler);
-  client.registerListener(testHandler2);
-  for (let index = 0; index < 1256; index++) {
-    client.send(TEST_OPS.TEXT_TEST, {
-      message: `this will ${
-        index % 5 === 0
-          ? Array(32000)
-              .fill()
-              .map(() => "a")
-              .join("")
-          : ""
-      } be queued before ready ${index + 1}`,
-      index: index + 1,
-    });
-  }
-  const c = [];
-  client.on("mouse_event", (data, seq) => {
-    c.push({
-      data,
-      seq,
-    });
-  });
-  setTimeout(() => {
-    console.log(c.slice(1160));
-  }, 2500);
 
-  client.on("close", () => {
-    console.log("client fired close");
-    // client.send(TEST_OPS.TEXT_TEST, "how are you")
-  });
-  client.on("ready", () => {
-    console.log("sending to server");
+
+const client = Client("192.168.178.39", 3015);
+client.registerListener(testHandler);
+client.registerListener(testHandler2);
+client.on('error', (err, willRetry) => {
+    console.log(err, willRetry)
+})
+let index = 0;
+setInterval(() => {
     client.send(TEST_OPS.TEXT_TEST, {
-      message: "how are you",
-      index: -1,
-    });
+        message: `this will ${
+          index % 5 === 0
+            ? Array(32000)
+                .fill()
+                .map(() => "a")
+                .join("")
+            : ""
+        } be queued before ready ${index + 1}`,
+        index: index + 1,
+      });
+      index++;
+}, 2000)
+const c = [];
+client.on("mouse_event", (data, seq) => {
+  c.push({
+    data,
+    seq,
   });
-  client.connect();
 });
+
+client.on("close", () => {
+  console.log("client fired close");
+  // client.send(TEST_OPS.TEXT_TEST, "how are you")
+});
+client.on("ready", () => {
+  console.log("sending to server");
+  client.send(TEST_OPS.TEXT_TEST, {
+    message: "how are you",
+    index: -1,
+  });
+});
+client.connect();

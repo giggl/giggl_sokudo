@@ -4,7 +4,6 @@ const EventEmitter = require("events");
 const constants = require("../shared/constants");
 const Client = require("../shared/client");
 const {
-  parseMessage,
   packError,
   parseHandshake,
   packHandshakeResponse,
@@ -112,11 +111,18 @@ class Server extends EventEmitter {
       }
       this._cleanupClient(client);
     });
+    socket.on("error", error => {
+        this.emit("error", error);
+        
+    })
     client.on("close_internal", () => {
       client._ready = false;
       client.state = constants.CLIENT_STATE.DISCONNECTING;
       //this will trigger the other close event above and emit the close to listeners that way
       socket.destroy();
+    });
+    client.on("error", (err) => {
+      this.emit("error", err);
     });
     socket.on("end", () => {
       client.emitted_end = true;

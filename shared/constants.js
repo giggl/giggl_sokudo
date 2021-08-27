@@ -11,6 +11,7 @@ const CLIENT_STATE = {
   DISCONNECTING: 4,
   DISCONNECTED: 5,
   FAILED: 6,
+  RECONNECTING: 7,
 };
 const METHODS = {
   NODE_BUFFER: 0,
@@ -27,6 +28,7 @@ const RESERVED_NAMES = [
   "client_ready",
   "ready",
   "close_internal",
+  'reconnect'
 ];
 module.exports = {
   OP_CODES,

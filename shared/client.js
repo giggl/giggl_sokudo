@@ -52,18 +52,22 @@ class Client {
       this.dataHandler = handler;
     } else if (event === "close_internal") {
       this.closeHandler = handler;
+    } else if (event === "error") {
+      this.errorHandler = handler;
     }
   }
   close() {
     if (!this._ready) {
-      throw new Error("cant close in non ready state");
+      if (this.errorHandler)
+        this.errorHandler(new Error("cant close in non ready state"));
     }
     this.closeHandler(this);
   }
   send(opcode, data) {
     const handler = this.handler.state.handlers[opcode];
     if (!handler) {
-      throw new Error("unknown send handler " + opcode);
+      if (this.errorHandler)
+        this.errorHandler(new Error("unknown send handler " + opcode));
     }
     const buffer = handler.packer(data, this.method.n, this);
     if (this._ready) {
@@ -72,9 +76,14 @@ class Client {
       this.state != CLIENT_STATE.DISCONNECTED &&
       this.state != CLIENT_STATE.DISCONNECTING
     ) {
+      if (this.waitQueue === null) this.waitQueue = [];
       this.waitQueue.push({ opcode, buffer });
     } else {
-      throw new Error("Tried to send message in faulty state " + this.state);
+      if (this.errorHandler) {
+        this.errorHandler(
+          new Error("Tried to send message in faulty state " + this.state)
+        );
+      }
     }
   }
 }
