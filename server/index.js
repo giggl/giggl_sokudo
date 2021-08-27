@@ -23,9 +23,9 @@ class Server extends EventEmitter {
     };
   }
 
-  registerListener(handler) {
+  useHandler(handler) {
     const { op, eventName } = handler;
-    if (op <= 4) {
+    if (op <= Object.keys(constants.OP_CODES).length) {
       throw new Error("reserved OpCode " + op);
     }
     if (RESERVED_NAMES.includes(eventName)) {
@@ -155,10 +155,10 @@ class Server extends EventEmitter {
         }
       } else if (client.state === constants.CLIENT_STATE.CONNECTED) {
         for (const message of messages) {
-            if(message.op === constants.OP_CODES.KEEP_ALIVE) {
-                client._send(constants.OP_CODES.KEEP_ALIVE_ACK, rawMessage.data);
-                continue;
-            }
+          if (message.op === constants.OP_CODES.KEEP_ALIVE) {
+            client._send(constants.OP_CODES.KEEP_ALIVE_ACK, rawMessage.data);
+            continue;
+          }
           const handler = this.state.handlers[message.op];
           if (!handler) {
             throw new Error("received unhandeled op" + message.op);

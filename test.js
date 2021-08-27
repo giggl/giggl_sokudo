@@ -1,5 +1,5 @@
-const Server = require("./server/server");
-const Client = require("./client/connection");
+const Server = require("./server");
+const Client = require("./client");
 const TEST_OPS = {
   TEXT_TEST: 5,
   MOUSE_MOVE: 6,
@@ -42,17 +42,14 @@ const testHandler2 = {
 };
 //server
 const app = Server({});
-app.registerListener(testHandler);
-app.registerListener(testHandler2);
+app.useHandler(testHandler);
+app.useHandler(testHandler2);
 
 app.on("client_close", (client) => {
   console.log("server client closed");
 });
 const indexes = {};
 app.on("test_event", (unpacked, seq, client) => {
-  if (indexes[unpacked.index]) {
-    throw new Error("duplicated index " + unpacked.index);
-  }
   indexes[unpacked.index] = 1;
   console.log(unpacked, seq);
   client.send(TEST_OPS.MOUSE_MOVE, {
@@ -69,47 +66,70 @@ app.on("test_event", (unpacked, seq, client) => {
 });
 // client
 
-const client = Client("192.168.178.39", 3015);
-client.registerListener(testHandler);
-client.registerListener(testHandler2);
-client.on("error", (err, willRetry) => {
-  // console.log(err, willRetry);
-});
-let index = 0;
-setInterval(() => {
-  client.send(TEST_OPS.TEXT_TEST, {
-    message: `this will ${
-      index % 5 === 0
-        ? Array(32000)
-            .fill()
-            .map(() => "a")
-            .join("")
-        : ""
-    } be queued before ready ${index + 1}`,
-    index: index + 1,
-  });
-  index++;
-}, 25);
-const c = [];
-client.on("mouse_event", (data, seq) => {
-  c.push({
-    data,
-    seq,
-  });
-});
+if (process.env.SERVER) {
+  app.listen(3015).then(res => {
+      console.log("server ready")
+  })
 
-client.on("close", () => {
-  console.log("client fired close");
-  // client.send(TEST_OPS.TEXT_TEST, "how are you")
-});
-client.on("reconnect", () => {
-  console.log("reconnected!");
-});
-client.on("ready", () => {
-  console.log("client emitted ready");
-  client.send(TEST_OPS.TEXT_TEST, {
-    message: "how are you",
-    index: -1,
+} else {
+  const client = Client("localhost", 3015, {
+      autoReconnect: false
   });
-});
-client.connect();
+  client.useHandler(testHandler);
+  client.useHandler(testHandler2);
+  client.on("error", (err, willRetry) => {
+     console.log(err, willRetry);
+  });
+  for (let index = 0; index < 6; index++) {
+    client.send(TEST_OPS.TEXT_TEST, {
+      message: `this will ${
+        index % 5 === 0
+          ? Array(34)
+              .fill()
+              .map(() => "a")
+              .join("")
+          : ""
+      } be queued before ready ${index + 1}`,
+      index: index + 1,
+    });
+  }
+
+  const c = [];
+  client.on("mouse_event", (data, seq) => {
+    c.push({
+      data,
+      seq,
+    });
+  });
+
+  client.on("close", () => {
+    console.log("client fired close");
+    // client.send(TEST_OPS.TEXT_TEST, "how are you")
+  });
+  client.on("reconnect", () => {
+    console.log("reconnected!");
+  });
+  client.on("ready", () => {
+    console.log("client emitted ready");
+    client.send(TEST_OPS.TEXT_TEST, {
+      message: "how are you",
+      index: -1,
+    });
+    let index = 0;
+    setInterval(() => {
+      client.send(TEST_OPS.TEXT_TEST, {
+        message: `this will ${
+          index % 5 === 0
+            ? Array(32)
+                .fill()
+                .map(() => "a")
+                .join("")
+            : ""
+        } be queued before ready ${index + 1}`,
+        index: index + 1,
+      });
+      index++;
+    }, 2000);
+  });
+  client.connect();
+}

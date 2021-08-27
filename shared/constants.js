@@ -23,7 +23,11 @@ const DEFAULT_SERVER_PROPS = {
   version: 1,
   methods: { ...METHODS },
 };
-const DEFAULT_CLIENT_OPTS = { autoReconnect: true, heartbeatInterval: 250 };
+const DEFAULT_CLIENT_OPTS = {
+  autoReconnect: true,
+  heartbeatInterval: 250,
+  replay: true,
+};
 const RESERVED_NAMES = [
   "error",
   "client_close",
