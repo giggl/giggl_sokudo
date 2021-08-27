@@ -48,7 +48,7 @@ app.useHandler(testHandler2);
 app.on("client_close", (client) => {
   console.log("server client closed");
 });
-app.on("err", (err) => {
+app.on("error", (err) => {
   //  console.log("server client closed");
   });
 const indexes = {};
