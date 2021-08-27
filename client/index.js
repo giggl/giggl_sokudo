@@ -192,16 +192,6 @@ class Connection extends EventEmitter {
       }
     );
     this.socket.setNoDelay();
-    // when i disabled my wifi it took over 30 seconds for a error event to be thrown,
-    // which is to slow. so this will trigger this faster
-    if (this.shouldRetryConnect && this._reconnectTimeout === null) {
-      this._reconnectTimeout = setTimeout(() => {
-        this._reconnectTimeout = null;
-        if (this.shouldRetryConnect && !this._ready) {
-          this._handleReconnect();
-        }
-      }, 50);
-    }
     this.socket.on("error", (err) => {
       if (this.client) {
         this.client._ready = false;

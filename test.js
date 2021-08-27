@@ -78,7 +78,7 @@ if (process.env.SERVER) {
     console.log("server ready");
   });
 } else {
-  const client = Client("192.168.178.39", 3015, {
+  const client = Client("localhost", 3015, {
     autoReconnect: true,
   });
   client.useHandler(testHandler);
