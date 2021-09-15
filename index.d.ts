@@ -1,8 +1,17 @@
+enum MethodType {
+    NODE_BUFFER ,
+    MSGPACK 
+}
+declare interface Methods {
+    NODE_BUFFER:number = 0,
+    MSGPACK:number = 1,
+}
+
 declare interface Handler {
     op: number;
     eventName: string;
-    packer: (data: any, method: number) => Buffer;
-    unpacker: (buffer: Buffer, method: number) => any;
+    packer: (data: any, method: MethodType) => Buffer;
+    unpacker: (buffer: Buffer, method: MethodType) => any;
 
 }
 
@@ -26,10 +35,6 @@ declare class Server {
     unregisterHandler(name: number | string);
 }
 
-interface Methods {
-    NODE_BUFFER: number = 0,
-    MSGPACK: number = 1,
-}
 
 interface ServerProps {
     version?: number = 1;
