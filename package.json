@@ -14,5 +14,8 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "devDependencies": {
+    "@types/node": "^16.9.1"
+  }
 }
