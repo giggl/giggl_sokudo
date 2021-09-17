@@ -1,26 +1,28 @@
-declare enum MethodType {
+export as namespace Sokudo;
+
+export declare enum MethodType {
   NODE_BUFFER,
   MSGPACK,
 }
 
-declare interface Methods {
+export declare interface Methods {
   NODE_BUFFER: 0;
   MSGPACK: 1;
 }
 
-declare interface Handler {
+export declare interface Handler {
   op: number;
   eventName: string;
   packer: <T>(data: T, method: MethodType) => Buffer;
   unpacker: (buffer: Buffer, method: MethodType) => any;
 }
 
-declare class Client {
+export declare class Client {
   send(opCode: number, data: any): void;
   close(): void;
 }
 
-declare class Connection {
+export declare class Connection {
   useHandler(handler: Handler): void;
   unregisterHandler(name: number | string);
   send(opCode: number, data: any): void;
@@ -28,7 +30,7 @@ declare class Connection {
   connect(): void;
 }
 
-declare class Server {
+export declare class Server {
   listen(port: number | string, bindAddress?: string): Promise<void | Error>;
   useHandler(handler: Handler): void;
   unregisterHandler(name: number | string);
@@ -45,7 +47,7 @@ interface ClientProps {
   replay?: boolean;
 }
 
-declare namespace Sokudo {
+export declare namespace Sokudo {
   function Client(
     host: string,
     port: string | number,
