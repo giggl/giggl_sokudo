@@ -228,5 +228,6 @@ class Server extends EventEmitter {
     return this._createListener(bindAddress, port);
   }
 }
-
-module.exports = Server;
+module.exports = (props) => {
+  return new Server(props || {});
+};

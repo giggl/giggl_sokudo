@@ -47,3 +47,12 @@ interface ClientProps {
   heartbeatInterval?: number;
   replay?: boolean;
 }
+
+export declare namespace Sokudo {
+  function Client(
+    host: string,
+    port: string | number,
+    props?: ClientProps
+  ): Connection;
+  function Server(props?: ServerProps): Server;
+}
