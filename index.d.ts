@@ -10,11 +10,11 @@ export declare interface Methods {
   MSGPACK: 1;
 }
 
-export declare interface Handler {
+export declare interface Handler<T, K> {
   op: number;
   eventName: string;
-  packer: <T>(data: T, method: MethodType) => Buffer;
-  unpacker: (buffer: Buffer, method: MethodType) => any;
+  packer: (data: T, method: MethodType) => Buffer;
+  unpacker: (buffer: Buffer, method: MethodType) => K;
 }
 
 export declare class Client {
