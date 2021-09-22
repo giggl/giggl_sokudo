@@ -299,13 +299,4 @@ class Connection extends EventEmitter {
   }
 }
 
-module.exports = (host, port, options) => {
-  const opts = options || {};
-  return new Connection({
-    host,
-    port: typeof port === "string" ? Number.parseInt(port) : port,
-    version: 1,
-    ...constants.DEFAULT_CLIENT_OPTS,
-    ...opts,
-  });
-};
+module.exports = Connection; 
