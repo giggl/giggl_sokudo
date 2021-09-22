@@ -8,12 +8,41 @@ const TEST_OPS = {
 const testHandler = {
   op: TEST_OPS.TEXT_TEST,
   eventName: "test_event",
-  structure: ["int32", "string"]
+  structure: ["int32", "string"],
+  packer: (data, method) => {
+    console.log("called");
+    const buffer = Buffer.alloc(4 + data[1].length);
+    buffer.writeInt32LE(data[0], 0);
+    buffer.write(data[1], 4);
+    return buffer;
+  },
+  unpacker: (buffer, method) => {
+    console.log("called 2");
+    const index = buffer.readInt32LE();
+    return [
+      index,
+       buffer.slice(4).toString("utf-8"),
+   ];
+  },
 };
 const testHandler2 = {
   op: TEST_OPS.MOUSE_MOVE,
   eventName: "mouse_event",
-  structure: ["int32", "int32", "int32"]
+  structure: ["int32", "int32", "int32"],
+  packer: (data, method) => {
+    const buffer = Buffer.alloc(12);
+    buffer.writeInt32LE(data[0], 0);
+    buffer.writeInt32LE(data[1], 4);
+    buffer.writeInt32LE(data[2], 8);
+    return buffer;
+  },
+  unpacker: (buffer, method) => {
+    return [
+       buffer.readInt32LE(0),
+       buffer.readInt32LE(4),
+      buffer.readInt32LE(8),
+    ];
+  },
 };
 //server
 const app = Server({preferGpack: true});
@@ -52,7 +81,7 @@ if (process.env.SERVER) {
 } else {
   const client = Client("localhost", 3015, {
     autoReconnect: true,
-    preferGpack: true
+
   });
   client.useHandler(testHandler);
   client.useHandler(testHandler2);
