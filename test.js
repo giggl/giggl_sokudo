@@ -8,40 +8,15 @@ const TEST_OPS = {
 const testHandler = {
   op: TEST_OPS.TEXT_TEST,
   eventName: "test_event",
-  packer: (data, method) => {
-    const buffer = Buffer.alloc(4 + data.message.length);
-    buffer.writeInt32LE(data.index, 0);
-    buffer.write(data.message, 4);
-    return buffer;
-  },
-  unpacker: (buffer, method) => {
-    const index = buffer.readInt32LE();
-    return {
-      index,
-      message: buffer.slice(4).toString("utf-8"),
-    };
-  },
+  structure: ["int32", "string"]
 };
 const testHandler2 = {
   op: TEST_OPS.MOUSE_MOVE,
   eventName: "mouse_event",
-  packer: (data, method) => {
-    const buffer = Buffer.alloc(12);
-    buffer.writeInt32LE(data.x, 0);
-    buffer.writeInt32LE(data.y, 4);
-    buffer.writeInt32LE(data.index, 8);
-    return buffer;
-  },
-  unpacker: (buffer, method) => {
-    return {
-      x: buffer.readInt32LE(0),
-      y: buffer.readInt32LE(4),
-      index: buffer.readInt32LE(8),
-    };
-  },
+  structure: ["int32", "int32", "int32"]
 };
 //server
-const app = Server({});
+const app = Server({preferGpack: true});
 app.useHandler(testHandler);
 app.useHandler(testHandler2);
 
@@ -53,16 +28,13 @@ app.on("error", (err) => {
 });
 const indexes = {};
 app.on("test_event", (unpacked, seq, client) => {
-  indexes[unpacked.index] = 1;
-  if (unpacked.index % 1000 === 0) {
-    console.log(unpacked, seq);
-  }
+  console.log(unpacked);
   if (seq % 5 === 0) {
-    client.send(TEST_OPS.MOUSE_MOVE, {
-      x: 123,
-      y: 456,
-      index: unpacked.index,
-    });
+    client.send(TEST_OPS.MOUSE_MOVE, [
+       123,
+       456,
+       unpacked.index,
+    ]);
   }
 
   //   client.close();
@@ -80,6 +52,7 @@ if (process.env.SERVER) {
 } else {
   const client = Client("localhost", 3015, {
     autoReconnect: true,
+    preferGpack: true
   });
   client.useHandler(testHandler);
   client.useHandler(testHandler2);
@@ -87,8 +60,8 @@ if (process.env.SERVER) {
     console.log(err, willRetry);
   });
   for (let index = 0; index < 6; index++) {
-    client.send(TEST_OPS.TEXT_TEST, {
-      message: `this will ${
+    client.send(TEST_OPS.TEXT_TEST, [index+1,
+    `this will ${
         index % 5 === 0
           ? Array(34)
               .fill()
@@ -96,10 +69,8 @@ if (process.env.SERVER) {
               .join("")
           : ""
       } be queued before ready ${index + 1}`,
-      index: index + 1,
-    });
+    ]);
   }
-
   const c = [];
   client.on("mouse_event", (data, seq) => {
     c.push({
@@ -117,25 +88,25 @@ if (process.env.SERVER) {
   });
   client.on("ready", () => {
     console.log("client emitted ready");
-    client.send(TEST_OPS.TEXT_TEST, {
-      message: "how are you",
-      index: -1,
-    });
+    client.send(TEST_OPS.TEXT_TEST, [
+       -1,
+       "how are you",
+    ]);
     let index = 0;
     setInterval(() => {
-      client.send(TEST_OPS.TEXT_TEST, {
-        message: `${
-          index % 5 === 0
+      client.send(TEST_OPS.TEXT_TEST, [
+        index + 1,
+         `${
+          (index + 1) % 5 === 0
             ? Array(15)
                 .fill()
                 .map(() => "A")
                 .join("")
             : ""
         } ${index + 1}`,
-        index: index + 1,
-      });
+      ]);
       index++;
-    });
+    }, 500);
   });
   client.connect();
 }

@@ -1,4 +1,4 @@
-const { CLIENT_STATE } = require("./constants");
+const { CLIENT_STATE, METHODS } = require("./constants");
 const { packMessage, parseMessage } = require("./message");
 class Client {
   constructor(socket, handler) {
@@ -69,7 +69,10 @@ class Client {
       if (this.errorHandler)
         this.errorHandler(new Error("unknown send handler " + opcode));
     }
-    const buffer = handler.packer(data, this.method.n, this);
+    const isGpack = this.method.n === METHODS.GPACK;
+    if(isGpack && !Array.isArray(data))
+      throw new Error("gpack data is not array");
+    const buffer = isGpack ? handler._pack.pack(data) : handler.packer(data, this.method.n, this);
     if (this._ready) {
       this._send(opcode, buffer);
     } else if (

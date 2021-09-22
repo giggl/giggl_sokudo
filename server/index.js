@@ -1,6 +1,6 @@
 const net = require("net");
 const EventEmitter = require("events");
-
+const Pack = require("../shared/pack.js");
 const constants = require("../shared/constants");
 const Client = require("../shared/client");
 const {
@@ -21,6 +21,7 @@ class Server extends EventEmitter {
       clients: {},
       props: { ...constants.DEFAULT_SERVER_PROPS, ...props },
     };
+
   }
 
   useHandler(handler) {
@@ -34,6 +35,8 @@ class Server extends EventEmitter {
     if (this.state.handlers[op]) {
       throw new Error("handler already registered " + op);
     }
+    if(this.state.props.methods.GPACK && Array.isArray(handler.structure))
+      handler._pack = new Pack(handler.structure, false, "little", 2);
     this.state.handlers[op] = handler;
   }
   unregisterHandler(opOrEventName) {
@@ -76,6 +79,22 @@ class Server extends EventEmitter {
     const opts = this.state.props.methods;
     // start with lowest
     const sorted = parsedHandshake.supportedMethods.sort();
+
+    if(this.state.props.preferGpack) {
+      if(opts.GPACK && sorted.includes(constants.METHODS.GPACK)) {
+        client.version = parsedHandshake.version;
+          client.method = {
+            key: "GPACK",
+            n: constants.METHODS.GPACK,
+          };
+          const packed = packHandshakeResponse(
+            parsedHandshake.version,
+            constants.METHODS.GPACK
+          );
+          client._send(constants.OP_CODES.HANDSHAKE_ACK, packed);
+          return true;
+      }
+    }
     for (const clientOpt of sorted) {
       for (const opt in opts) {
         if (opts[opt] === clientOpt) {
@@ -147,7 +166,7 @@ class Server extends EventEmitter {
           const retry = client.handshake_retry || 0;
           if (retry === 3) {
             this._cleanupClient(client);
-            return 0;
+            return;
           }
           client.handshake_retry = retry + 1;
           const error = packError(1, "non handhake during handshake");
@@ -163,12 +182,17 @@ class Server extends EventEmitter {
           if (!handler) {
             throw new Error("received unhandeled op" + message.op);
           }
+          if(client.method.n === constants.METHODS.GPACK) {
+            const unpacked = handler._pack.unpack(message.data);
+            this.emit(handler.eventName, unpacked, message.seq, client);
+          } else {
           const unpacked = handler.unpacker(
             message.data,
             client.method.n,
             client
           );
           this.emit(handler.eventName, unpacked, message.seq, client);
+          }
         }
       } else {
         this.emit(

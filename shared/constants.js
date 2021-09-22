@@ -18,6 +18,7 @@ const CLIENT_STATE = {
 const METHODS = {
   NODE_BUFFER: 0,
   MSGPACK: 1,
+  GPACK: 2,
 };
 const DEFAULT_SERVER_PROPS = {
   version: 1,
@@ -27,6 +28,7 @@ const DEFAULT_CLIENT_OPTS = {
   autoReconnect: true,
   heartbeatInterval: 250,
   replay: true,
+  methods: { ...METHODS },
 };
 const RESERVED_NAMES = [
   "error",

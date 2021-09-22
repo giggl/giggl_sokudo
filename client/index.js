@@ -1,6 +1,6 @@
 const net = require("net");
 const EventEmitter = require("events");
-
+const Pack = require("../shared/pack");
 const Client = require("../shared/client");
 const constants = require("../shared/constants");
 const { packHandshake, parseHandhakeResponse } = require("../shared/message");
@@ -33,7 +33,10 @@ class Connection extends EventEmitter {
     if (this.state.handlers[op]) {
       throw new Error("handler already registered " + op);
     }
+    if(this.opts.methods.GPACK && Array.isArray(handler.structure))
+      handler._pack = new Pack(handler.structure, false, "little", 2);
     this.state.handlers[op] = handler;
+
   }
   unregisterHandler(opOrEventName) {
     if (typeof opOrEventName === "number") {
@@ -170,12 +173,17 @@ class Connection extends EventEmitter {
                 if (!handler) {
                   this.emit("error", new Error("unhandled op " + message.op));
                 }
-                const parsed = handler.unpacker(
-                  message.data,
-                  this.method,
-                  client
+                if(this.method === constants.METHODS.GPACK) {
+                  const parsed = handler._pack.unpack(message.data);
+                  this.emit(handler.eventName, parsed, message.seq);
+                } else {
+                  const parsed = handler.unpacker(
+                    message.data,
+                    this.method,
+                    client
                 );
-                this.emit(handler.eventName, parsed, message.seq);
+                  this.emit(handler.eventName, parsed, message.seq);
+                }
               }
             } else {
               this.emit(
@@ -294,7 +302,7 @@ class Connection extends EventEmitter {
   _sendHandshake() {
     this.client._send(
       constants.OP_CODES.HANDSHAKE,
-      packHandshake(this.opts.version, Object.values(constants.METHODS))
+      packHandshake(this.opts.version, this.opts.preferGpack && this.opts.methods.GPACK ? [constants.METHODS.GPACK] : Object.values(this.opts.methods))
     );
   }
 }
