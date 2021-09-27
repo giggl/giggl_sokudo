@@ -3,6 +3,7 @@ const IDS = {
   DOUBLE: 1,
   FLOAT: 2,
   STRING: 3,
+  BINARY: 4,
 };
 class Pack {
   constructor(structure, web = false, endianess = "little", stringSize = 2) {
@@ -31,6 +32,9 @@ class Pack {
       } else if (entry === "string") {
         o.byteSize = null;
         o.type = IDS.STRING;
+      }else if (entry === "binary") {
+        o.byteSize = null;
+        o.type = IDS.BINARY;
       } else if (entry === "double") {
         o.type = IDS.DOUBLE;
         o.byteSize = 8;
@@ -47,7 +51,7 @@ class Pack {
     });
   }
   _getByteSize(structEntry, value) {
-    if (structEntry.type === IDS.STRING) return value.length + this.stringSize;
+    if (structEntry.type === IDS.STRING || structEntry.type === IDS.BINARY) return value.length + this.stringSize;
     return structEntry.byteSize;
   }
   pack(values) {
@@ -113,6 +117,10 @@ class Pack {
           : bufferValue.toString("utf-8");
         values.push(string);
         offset += bufferValue.length + this.stringSize;
+      } else if(entry.type === IDS.BINARY) {
+        const bufferValue = this._parseValue(state, entry, offset);
+        values.push(bufferValue);
+        offset += bufferValue.length + this.stringSize;
       } else {
         const size = this._getByteSize(entry);
         values.push(this._parseValue(state, entry, offset));
@@ -124,7 +132,7 @@ class Pack {
 
   _parseValue(buffer, structEntry, offset) {
     const web = this.web;
-    if (structEntry.type === IDS.STRING) {
+    if (structEntry.type === IDS.STRING || structEntry.type === IDS.BINARY) {
       let length;
       if (web) length = buffer.view[this.string_read](offset, !this.bigEndian);
       else length = buffer.buffer[this.string_read](offset);
@@ -188,7 +196,7 @@ class Pack {
   _packValue(buffer, structEntry, value, offset) {
     const web = this.web;
 
-    if (structEntry.type === IDS.STRING) {
+    if (structEntry.type === IDS.STRING || structEntry.type === IDS.BINARY) {
       if (web) {
         buffer.view[this.string_write](offset, value.length, !this.bigEndian);
         buffer.buffer.set(value, offset + this.stringSize);
