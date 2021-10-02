@@ -53,11 +53,10 @@ interface ClientProps {
   preferGpack: boolean;
 }
 
-export declare namespace Sokudo {
-  export function Client(
-    host: string,
-    port: string | number,
-    props?: ClientProps
-  ): Connection;
-  export function Server(props?: ServerProps): Server;
-}
+export function Client(
+  host: string,
+  port: string | number,
+  props?: ClientProps
+): Connection;
+
+export function Server(props?: ServerProps): Server;
