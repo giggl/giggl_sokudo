@@ -31,6 +31,8 @@ export declare class Connection {
   send(opCode: number, data: any): void;
   close(): void;
   connect(): void;
+  on: (event: string, callback: () => void) => void;
+  on: (event: string, callback: (data: any) => void) => void
 }
 
 export declare class Server {
