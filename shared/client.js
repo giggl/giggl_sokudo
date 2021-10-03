@@ -1,3 +1,4 @@
+
 const { CLIENT_STATE, METHODS } = require("./constants");
 const { packMessage, parseMessage } = require("./message");
 class Client {
@@ -22,6 +23,8 @@ class Client {
         ? parseMessage(cacheBuffer, this.cache.offset)
         : parseMessage(cacheBuffer);
 
+      if(messages === null)
+        throw new Error(`Unexpected messsage of length ${cacheBuffer.length}: ${cacheBuffer}`);
       if (messages.partial) {
         this.cache = {
           cacheBuffer,
