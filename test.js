@@ -57,8 +57,8 @@ app.on("error", (err) => {
 });
 const indexes = {};
 app.on("test_event", (unpacked, seq, client) => {
-  if(seq % 5000 === 0)
-  console.log(unpacked[0]);
+  if(unpacked[0] % 5000 === 0)
+  console.log(unpacked);
   if (seq % 5 === 0) {
     client.send(TEST_OPS.MOUSE_MOVE, [
        123,
