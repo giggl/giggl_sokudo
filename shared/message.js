@@ -5,7 +5,9 @@ const parseMessage = (buffer, offset = 0) => {
  we need to be able to recognise that and handle it by caching the buffer and the start of the messsage
  and parse it with the next tcp frame.
 */
-  if (buffer.length < 11) return null;
+  if (buffer.length < 11) {
+    return {partial: true, offset, messages: []};
+  }
   const messages = [];
   while (offset < buffer.length) {
     const header = buffer.subarray(offset, offset + 4);

@@ -138,7 +138,7 @@ if (process.env.SERVER) {
         ]);
         index++;
       }
-    }, 500);
+    }, 250);
   });
   client.connect();
 }
