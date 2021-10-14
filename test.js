@@ -57,6 +57,7 @@ app.on("error", (err) => {
 });
 const indexes = {};
 app.on("test_event", (unpacked, seq, client) => {
+  if(seq % 5000 === 0)
   console.log(unpacked);
   if (seq % 5 === 0) {
     client.send(TEST_OPS.MOUSE_MOVE, [
@@ -75,11 +76,11 @@ app.on("test_event", (unpacked, seq, client) => {
 // client
 
 if (process.env.SERVER) {
-  app.listen(3015).then((res) => {
+  app.listen(2000).then((res) => {
     console.log("server ready");
   });
 } else {
-  const client = Client("localhost", 3015, {
+  const client = Client("r730", 2000, {
     autoReconnect: true,
 
   });
@@ -123,18 +124,20 @@ if (process.env.SERVER) {
     ]);
     let index = 0;
     setInterval(() => {
-      client.send(TEST_OPS.TEXT_TEST, [
-        index + 1,
-         `${
-          (index + 1) % 5 === 0
-            ? Array(15)
-                .fill()
-                .map(() => "A")
-                .join("")
-            : ""
-        } ${index + 1}`,
-      ]);
-      index++;
+      for(let i = 0; i < 1000; i++) {
+        client.send(TEST_OPS.TEXT_TEST, [
+          index + 1,
+           `${
+            (index + 1) % 5 === 0
+              ? Array(15)
+                  .fill()
+                  .map(() => "A")
+                  .join("")
+              : ""
+          } ${index + 1}`,
+        ]);
+        index++;
+      }
     }, 500);
   });
   client.connect();
