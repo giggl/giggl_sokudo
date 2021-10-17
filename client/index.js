@@ -57,8 +57,8 @@ class Connection extends EventEmitter {
     this._heartbeat = setInterval(() => {
       if (
         this.lastHeartbeat &&
-        this._ready &&
-        Date.now() > this.lastHeartbeat + 1000
+        this._ready &&                   // todo make option
+        Date.now() > this.lastHeartbeat + 3000
       ) {
         if (this.client) {
           this.client._ready = false;
