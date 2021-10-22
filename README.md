@@ -63,7 +63,7 @@ Sokudo has two main ways to serialise and deserialise messages.
 1. **Node Buffers**
 Using this way the serialisation and deserialisation process are processed by the handler its self, which requires more logic implementation but may be able to increase performance in return.
 This works by providing the handler with two *middleware* functions, this example will serialise 3 numbers in the signed 32bit range.
-  1. The first is the property `packer` and is responsible for creating a in binary serialised version of the data, note that the data in this case does not need to follow a specific format or type pattern.
+   1. The first is the property `packer` and is responsible for creating a in binary serialised version of the data, note that the data in this case does not need to follow a specific format or type pattern.
     This packer is then called by sokudo internally which makes it a middleware.
     ```js
     const Handler = {
