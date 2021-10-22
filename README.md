@@ -96,10 +96,10 @@ The Parameters here are:
          }
        }
      ```
-   Here we take the received buffer and read the original x,y,z numbers back into a JavaScript Object and return this.
-   The Parameters here are:
-     * `buffer: Buffer` - the data received over the network, sokudo will deliver complete messages to this but the parsing itself is responsibility of the unpacker. Since this is middleware sokudo will only forward the returned data to the event handlers.
-     * `method: number` - this is the exact same as when serialisingm, the client/server agreed method for serialising and deserialising messages.
+    Here we take the received buffer and read the original x,y,z numbers back into a JavaScript Object and return this.
+    The Parameters here are:
+      * `buffer: Buffer` - the data received over the network, sokudo will deliver complete messages to this but the parsing itself is responsibility of the unpacker. Since this is middleware sokudo will only forward the returned data to the event handlers.
+      * `method: number` - this is the exact same as when serialisingm, the client/server agreed method for serialising and deserialising messages.
 
 2. **Gpack**
 Using this api, the serialisation and deserialisation are done by Sokudo internally using a very space efficient one dimensional serialisation approach.
