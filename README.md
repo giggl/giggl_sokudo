@@ -1,7 +1,112 @@
-# sokudo
+# Sokudo
 Custom TCP protocol for low latency message transfer.
 
-## Handlers
+## Description
+Soludo was developed by Giggl for internal purposes where the performance of Websockets is not sufficient.
+The aim is to provide low latency with average abstraction to the user.
+
+## Installation
+NPM:
+```sh
+npm i --save sokudo
+```
+Yarn:
+```sh
+yarn add sokudo
+```
+
+## Quick Example
+If you just want a simple example of how to use Sokudo you are right here.
+Note that this example uses **Gpack**
+### Server
+```js
+const { Server } = require("sokudo");
+const exampleHandler = {
+  op: 5,
+  eventName: "example_name",
+  structure: ["string", "uint16", "float", "int32"],
+}
+const app = Server();
+app.useHandler(exampleHandler);
+
+app.listen(3015, "127.0.0.1");
+
+app.on(exampleHandler.eventName, (payload, seq, client) => {
+  console.log(payload)
+});
+```
+### Client
+```js
+const { Client } = require("sokudo");
+const exampleHandler = {
+  op: 5,
+  eventName: "example_name",
+  structure: ["string", "uint16", "float", "int32"],
+}
+
+const connection = new Client("127.0.0.1", 3015);
+connection.useHandler(exampleHandler);
+connection.on("ready", () => {
+  connection.send(exampleHandler.op, ["SomeString", 123, 56.45, 2021]);
+});
+
+app.on(exampleHandler.eventName, (payload, seq, client) => {
+  console.log(payload)
+});
+
+connection.connect();
+```
+
+## Message Serialisation & Deserialisation
+Sokudo has two main ways to serialise and deserialise messages.
+
+1. **Node Buffers**
+Using this way the serialisation and deserialisation process are processed by the handler its self, which requires more logic implementation but may be able to increase performance in return.
+This works by providing the handler with two *middleware* functions, this example will serialise 3 numbers in the signed 32bit range.
+     1. The first is the property `packer` and is responsible for creating a in binary serialised version of the data, note that the data in this case does not need to follow a specific format or type pattern.
+This packer is then called by sokudo internally which makes it a middleware.
+```js
+const Handler = {
+          packer: (data, method) => {
+            const buffer = Buffer.alloc(12);
+            buffer.writeInt32LE(data.x, 0);
+            buffer.writeInt32LE(data.y, 4);
+            buffer.writeInt32LE(data.z, 8);
+            return buffer;
+          }
+}
+ ```
+In this example we serialise x,y,z into a node buffer by using the provided Apis node provides.
+The Parameters here are:
+        * `data: any` - This is the data provided to the send function, it can be anything which is not null or undefined, it will work with primitives too.
+        * `method: number` - Comes from options passed to the client structure, its a number containing the serialisation method the client and server have agreed upon the handshake process, this needs to be used when clients can be expected to use different methods for serialising data.
+
+
+    2. The second property is called `unpacker` and is responsible for taking a buffer and returning the original data deserialised again, the pattern is very similar to the packer with the difference being the first argument containing a node buffer which is the message and returning any datatype representing hte original data.
+    ```js
+    const hander = {
+    //...
+      unpacker: (buffer, method) => {
+          const parsed_content = {
+                x: buffer.readInt32LE(0),
+                y: buffer.readInt32LE(4),
+                z: buffer.readInt32LE(8),
+      };
+        return parsed_content;
+          }
+          }
+          ```
+          Here we take the received buffer and read the original x,y,z numbers back into a JavaScript Object and return this.
+          The Parameters here are:
+               * `buffer: Buffer` - the data received over the network, sokudo will deliver complete messages to this but the parsing itself is responsibility of the unpacker. Since this is middleware sokudo will only forward the returned data to the event handlers.
+               * `method: number` - this is the exact same as when serialisingm, the client/server agreed method for serialising and deserialising messages.
+
+2.
+
+
+## API
+Definition of apis.
+### Handlers
 Handlers are Objects pasesd to either clients OR the server and describe how to pack and unpack a certain message.
 A Handler has 4 properties
 * `op: number` - This defines the Op Code which will also be send across the network, needs to be 5 or higher, lower values are reserved.
@@ -32,7 +137,7 @@ const testHandler2 = {
 ```
 
 ## Example Usage
-Server:  
+Server:
 ```js
 const Server = require("./server")
 
@@ -56,7 +161,7 @@ app.on("client_ready", (client) => {
 
 ```
 
-Client: 
+Client:
 ```js
 const Client = require("./client")
 
@@ -76,20 +181,20 @@ client.on(someHandler.eventName, (unpacked, client) => {
     client.send(SomeOpCode, {some: data})
 });
 ```
-`ready` this is emitted when the connection is established the first time and the handshake was successful,  
-it is possible to send data before this. it will then be queued and send once connected  
+`ready` this is emitted when the connection is established the first time and the handshake was successful,
+it is possible to send data before this. it will then be queued and send once connected
 ```js
 client.on('ready', () => {
     client.send(SomeOp, 'data')
 })
 ```
-`reconnect` is emitted if a reconnect was sucessful 
+`reconnect` is emitted if a reconnect was sucessful
 ```js
 client.on('reconnect', () => {
-    
+
 })
 ```
-`error` is emitted when theres an issue with the connection to the server.  
+`error` is emitted when theres an issue with the connection to the server.
 if reconnecting is enabled this is when the auto reconnect loop internally starts, `reconnect` will be emitted when this was sucessful
 ```js
 client.on('error', () => {
