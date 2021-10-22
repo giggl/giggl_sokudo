@@ -82,7 +82,7 @@ The Parameters here are:
       * `data: any` - This is the data provided to the send function, it can be anything which is not null or undefined, it will work with primitives too.
       * `method: number` - Comes from options passed to the client structure, its a number containing the serialisation method the client and server have agreed upon the handshake process, this needs to be used when clients can be expected to use different methods for serialising data.
 
-   2. The second property is called `unpacker` and is responsible for taking a buffer and returning the original data deserialised again, the pattern is very similar to the packer with the difference being the first argument containing a node buffer which is the message and returning any datatype representing ht  e original data.
+  2. The second property is called `unpacker` and is responsible for taking a buffer and returning the original data deserialised again, the pattern is very similar to the packer with the difference being the first argument containing a node buffer which is the message and returning any datatype representing ht  e original data.
      ```js
         const hander = {
           //...
