@@ -78,11 +78,11 @@ This works by providing the handler with two *middleware* functions, this exampl
     }
      ```
     In this example we serialise x,y,z into a node buffer by using the provided Apis node provides.
-The Parameters here are:
+    The Parameters here are:
       * `data: any` - This is the data provided to the send function, it can be anything which is not null or undefined, it will work with primitives too.
-      * `method: number` - Comes from options passed to the client structure, its a number containing the serialisation method the client and server have agreed upon the handshake process, this needs to be used when clients can be expected to use different methods for serialising data.
+      * `method: number` - Comes from options passed to the client structure, its a number containing the serialisation method the client and server have agreed upon the handshake process, this needs to be used when clients can be expected to use different methods for serialising data.  
 
-  2. The second property is called `unpacker` and is responsible for taking a buffer and returning the original data deserialised again, the pattern is very similar to the packer with the difference being the first argument containing a node buffer which is the message and returning any datatype representing ht  e original data.
+   2. The second property is called `unpacker` and is responsible for taking a buffer and returning the original data deserialised again, the pattern is very similar to the packer with the difference being the first argument containing a node buffer which is the message and returning any datatype representing ht  e original data.
      ```js
         const hander = {
           //...
@@ -96,37 +96,39 @@ The Parameters here are:
          }
        }
      ```
-
-    Here we take the received buffer and read the original x,y,z numbers back into a JavaScript Object and return this.
-    The Parameters here are:
+     Here we take the received buffer and read the original x,y,z numbers back into a JavaScript Object and return this.
+     The Parameters here are:
       * `buffer: Buffer` - the data received over the network, sokudo will deliver complete messages to this but the parsing itself is responsibility of the unpacker. Since this is middleware sokudo will only forward the returned data to the event handlers.
       * `method: number` - this is the exact same as when serialisingm, the client/server agreed method for serialising and deserialising messages.
 
+
+
 2. **Gpack**
-Using this api, the serialisation and deserialisation are done by Sokudo internally using a very space efficient one dimensional serialisation approach.
-The api usage does not change from manual approach (1) but requires less code.
-Using Gpack a handler could look like the following:
-```js
-const handler = {
+
+   Using this api, the serialisation and deserialisation are done by Sokudo internally using a very space efficient one dimensional serialisation approach.
+   The api usage does not change from manual approach (1) but requires less code.
+   Using Gpack a handler could look like the following:
+   ```js
+   const handler = {
     // ...,
     structure: ["int32", "string", "double"]
-}
-```
-This will internally create a pack which has the above structure.
-Gpack requires that when sending a message, the data passed is an ordered array of values!
+   }
+   ```
+    This will internally create a pack which has the above structure.
+    Gpack requires that when sending a message, the data passed is an ordered array of values!
 
-  So given the above example
+      So given the above example
 
-  **Wrong**:
-  ```js
-    connection.send(handler.op, ["my string value", 45, 56.454546]); // WRONG
-  ```
-  **Correct**:
-  ```js
-    connection.send(handler.op, ["23", "my string value", 56.454546]); // CORRECT
-  ```
-  Also note that **At the moment** there is a string length limitation of 2^16-1 due to the fact the string length has to be encoded with the message payload.
-Otherwise there are no limiations or required steps besides that both client and server need to agree to the method of GPACK, further you should pass the options property: `preferGpack: true` to both server and client which can shorten handshake time.
+      **Wrong**:
+      ```js
+        connection.send(handler.op, ["my string value", 45, 56.454546]); // WRONG
+      ```
+      **Correct**:
+      ```js
+        connection.send(handler.op, ["23", "my string value", 56.454546]); // CORRECT
+      ```
+      Also note that **At the moment** there is a string length limitation of 2^16-1 due to the fact the string length has to be encoded with the message payload.
+    Otherwise there are no limiations or required steps besides that both client and server need to agree to the method of GPACK, further you should pass the options property: `preferGpack: true` to both server and client which can shorten handshake time.
 
 
 ## API
