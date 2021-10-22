@@ -64,43 +64,43 @@ Sokudo has two main ways to serialise and deserialise messages.
 Using this way the serialisation and deserialisation process are processed by the handler its self, which requires more logic implementation but may be able to increase performance in return.
 This works by providing the handler with two *middleware* functions, this example will serialise 3 numbers in the signed 32bit range.
    1. The first is the property `packer` and is responsible for creating a in binary serialised version of the data, note that the data in this case does not need to follow a specific format or type pattern.
-    This packer is then called by sokudo internally which makes it a middleware.
-    ```js
-    const Handler = {
-        // ...
-        packer: (data, method) => {
-          const buffer = Buffer.alloc(12);
-          buffer.writeInt32LE(data.x, 0);
-          buffer.writeInt32LE(data.y, 4);
-          buffer.writeInt32LE(data.z, 8);
-          return buffer;
-        }
-    }
-     ```
-    In this example we serialise x,y,z into a node buffer by using the provided Apis node provides.
-    The Parameters here are:
+      This packer is then called by sokudo internally which makes it a middleware.
+      ```js
+      const Handler = {
+          // ...
+          packer: (data, method) => {
+            const buffer = Buffer.alloc(12);
+            buffer.writeInt32LE(data.x, 0);
+            buffer.writeInt32LE(data.y, 4);
+            buffer.writeInt32LE(data.z, 8);
+            return buffer;
+          }
+      }
+      ```
+      In this example we serialise x,y,z into a node buffer by using the provided Apis node provides.
+      The Parameters here are:
       * `data: any` - This is the data provided to the send function, it can be anything which is not null or undefined, it will work with primitives too.
-      * `method: number` - Comes from options passed to the client structure, its a number containing the serialisation method the client and server have agreed upon the handshake process, this needs to be used when clients can be expected to use different methods for serialising data.  
+      * `method: number` - Comes from options passed to the client structure, its a number containing the serialisation  method the client and server have agreed upon the handshake process, this needs to be used when clients can be expected to use different methods for serialising data.  
+
 
    2. The second property is called `unpacker` and is responsible for taking a buffer and returning the original data deserialised again, the pattern is very similar to the packer with the difference being the first argument containing a node buffer which is the message and returning any datatype representing ht  e original data.
-     ```js
-        const hander = {
-          //...
-          unpacker: (buffer, method) => {
-            const parsed_content = {
-              x: buffer.readInt32LE(0),
-              y: buffer.readInt32LE(4),
-              z: buffer.readInt32LE(8),
-          };
-          return parsed_content;
-         }
-       }
-     ```
+      ```js
+          const hander = {
+            //...
+            unpacker: (buffer, method) => {
+              const parsed_content = {
+                x: buffer.readInt32LE(0),
+                y: buffer.readInt32LE(4),
+                z: buffer.readInt32LE(8),
+            };
+            return parsed_content;
+          }
+        }
+      ```
      Here we take the received buffer and read the original x,y,z numbers back into a JavaScript Object and return this.
      The Parameters here are:
       * `buffer: Buffer` - the data received over the network, sokudo will deliver complete messages to this but the parsing itself is responsibility of the unpacker. Since this is middleware sokudo will only forward the returned data to the event handlers.
       * `method: number` - this is the exact same as when serialisingm, the client/server agreed method for serialising and deserialising messages.
-
 
 
 2. **Gpack**
