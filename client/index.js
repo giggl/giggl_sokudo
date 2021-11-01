@@ -57,8 +57,8 @@ class Connection extends EventEmitter {
     this._heartbeat = setInterval(() => {
       if (
         this.lastHeartbeat &&
-        this._ready &&                   // todo make option
-        Date.now() > this.lastHeartbeat + 3000
+        this._ready &&
+        Date.now() > this.lastHeartbeat + this.opts.heartbeatTimeout
       ) {
         if (this.client) {
           this.client._ready = false;
@@ -72,7 +72,7 @@ class Connection extends EventEmitter {
         }
         this.emit(
           "error",
-          new Error("last heartbeat over 1 second"),
+          new Error(`last heartbeat over ${this.opts.heartbeatTimeout}ms`),
           willHandle
         );
       } else {

@@ -27,6 +27,7 @@ const DEFAULT_SERVER_PROPS = {
 const DEFAULT_CLIENT_OPTS = {
   autoReconnect: true,
   heartbeatInterval: 250,
+  heartbeatTimeoout: 3000,
   replay: true,
   methods: { ...METHODS },
 };
