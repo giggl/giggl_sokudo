@@ -227,6 +227,7 @@ client.on(someHandler.eventName, (unpacked, client) => {
 ```
 `ready` this is emitted when the connection is established the first time and the handshake was successful,
 it is possible to send data before this. it will then be queued and send once connected
+**NOTE**: Ready is ONLY emitted ONCE, to receive successful *reconnects* use `reconnect`
 ```js
 client.on('ready', () => {
     client.send(SomeOp, 'data')
