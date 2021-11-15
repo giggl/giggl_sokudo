@@ -251,3 +251,6 @@ client.on('error', () => {
 client.on('close', () => {
 })
 ```
+
+# LICENSE
+Sokudo is licensed under MIT, see [LICENSE](/LICENSE)
