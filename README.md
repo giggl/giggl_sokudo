@@ -3,16 +3,16 @@ Custom TCP protocol for low latency message transfer.
 
 ## Description
 Soludo was developed by Giggl for internal purposes where the performance of Websockets is not sufficient.
-The aim is to provide low latency with average abstraction to the user.
+The aim is to provide low latency with average abstraction to the user and remaining lightweight, sokudo has no dependencies except the node base modules.
 
 ## Installation
 NPM:
 ```sh
-npm i --save sokudo
+npm i --save @giggl/sokudo
 ```
 Yarn:
 ```sh
-yarn add sokudo
+yarn add @giggl/sokudo
 ```
 
 ## Quick Example
@@ -80,7 +80,7 @@ This works by providing the handler with two *middleware* functions, this exampl
       In this example we serialise x,y,z into a node buffer by using the provided Apis node provides.
       The Parameters here are:
       * `data: any` - This is the data provided to the send function, it can be anything which is not null or undefined, it will work with primitives too.
-      * `method: number` - Comes from options passed to the client structure, its a number containing the serialisation  method the client and server have agreed upon the handshake process, this needs to be used when clients can be expected to use different methods for serialising data.  
+      * `method: number` - Comes from options passed to the client structure, its a number containing the serialisation  method the client and server have agreed upon the handshake process, this needs to be used when clients can be expected to use different methods for serialising data.
 
 
    2. The second property is called `unpacker` and is responsible for taking a buffer and returning the original data deserialised again, the pattern is very similar to the packer with the difference being the first argument containing a node buffer which is the message and returning any datatype representing ht  e original data.
