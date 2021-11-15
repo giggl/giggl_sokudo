@@ -37,7 +37,7 @@ export declare class Connection {
 export declare class Server {
   listen(port: number | string, bindAddress?: string): Promise<void | Error>;
   useHandler(handler: Handler<*>): void;
-  unregisterHandler(name: number | string): void;;
+  unregisterHandler(name: number | string): void;
   on: (event: string, handler: (unpacked, seq: number, client: Client) => void) => void;
 }
 
