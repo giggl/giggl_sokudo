@@ -50,7 +50,7 @@ interface ServerProps {
 interface ClientProps {
   autoReconnect?: boolean;
   heartbeatInterval?: number;
-  heartbeatTimeoout?: number;
+  heartbeatTimeout?: number;
   replay?: boolean;
   preferGpack?: boolean;
 }
