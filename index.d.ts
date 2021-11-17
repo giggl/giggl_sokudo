@@ -52,7 +52,7 @@ interface ClientProps {
   heartbeatInterval?: number;
   heartbeatTimeoout?: number;
   replay?: boolean;
-  preferGpack: boolean;
+  preferGpack?: boolean;
 }
 
 export function Client(
