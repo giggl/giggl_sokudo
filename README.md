@@ -66,7 +66,7 @@ This works by providing the handler with two *middleware* functions, this exampl
    1. The first is the property `packer` and is responsible for creating a in binary serialised version of the data, note that the data in this case does not need to follow a specific format or type pattern.
       This packer is then called by sokudo internally which makes it a middleware.
       ```js
-      const Handler = {
+      const handler = {
           // ...
           packer: (data, method) => {
             const buffer = Buffer.alloc(12);
@@ -83,9 +83,9 @@ This works by providing the handler with two *middleware* functions, this exampl
       * `method: number` - Comes from options passed to the client structure, its a number containing the serialisation  method the client and server have agreed upon the handshake process, this needs to be used when clients can be expected to use different methods for serialising data.
 
 
-   2. The second property is called `unpacker` and is responsible for taking a buffer and returning the original data deserialised again, the pattern is very similar to the packer with the difference being the first argument containing a node buffer which is the message and returning any datatype representing ht  e original data.
+   2. The second property is called `unpacker` and is responsible for taking a buffer and returning the original data deserialised again, the pattern is very similar to the packer with the difference being the first argument containing a node buffer which is the message and returning any datatype representing the original data.
       ```js
-          const hander = {
+          const handler = {
             //...
             unpacker: (buffer, method) => {
               const parsed_content = {
