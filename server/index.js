@@ -115,6 +115,7 @@ class Server extends EventEmitter {
     // if we get here theres no supported method
     const error = packError(3, "client unsupported version");
     client._send(constants.OP_CODES.ERROR, error);
+    this.emit("error", new Error("client exhausted versions, cant satisfy connection"), client);
     return false;
   }
 

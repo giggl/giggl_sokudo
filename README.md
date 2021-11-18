@@ -134,8 +134,8 @@ This works by providing the handler with two *middleware* functions, this exampl
 ## API
 Definition of apis.
 ### Handlers
-Handlers are Objects pasesd to either clients OR the server and describe how to pack and unpack a certain message.
-A Handler has 4 properties
+Handlers are Objects passed to either clients OR the server and describe how to pack and unpack a certain message.
+A handler needs `op` and `eventName` and provide more depending if Gpack is used.
 
 * `op: number` - This defines the Op Code which will also be send across the network, needs to be 5 or higher, lower values are reserved.
 * `eventName:string` - this is a string which shall be used when registering a listener for this message type, i.e .`app.on()`. this cannot be a number as by design of the Node EventEmitter API.
@@ -143,7 +143,7 @@ A Handler has 4 properties
 * `unpacker?: (buffer: Buffer, method: number): any` - this is the reverse of the packer which takes a buffer and reconstructs it into Javascript data, not required when using gpack.
 * `structure?: string[]` - When submitted sokudo will treat this as a gpack handler and use that if available, it will fallback to packer/unpacker if either client or server do not support gpack.
 
-Example which writes 3 numbers:
+Example which writes 3 numbers using the node buffer approach of serialisation:
 ```js
 const testHandler2 = {
   op: 5,
@@ -193,16 +193,21 @@ app.on(someHandler.eventName, (unpacked, seq, client) => {
 // takes the port and the bind address(default "0.0.0.0") and returns a promise once that listener is ready
 server.listen(3015, "0.0.0.0")
 
+```
+Events which the server exposes:
 
-// the server also exposes the following events.
+Called when a client disconnects.
+```js
 app.on("client_close", (client) => {
   console.log("client disconnected!");
 });
-// this is invoked when a new client passed the handshake and is ready
+```
+
+This is invoked when a new client passed the handshake and is ready
+```js
 app.on("client_ready", (client) => {
   console.log("client connected!");
 });
-
 ```
 
 Client:
