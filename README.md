@@ -2,7 +2,7 @@
 Custom TCP protocol for low latency message transfer.
 
 ## Description
-Soludo was developed by Giggl for internal purposes where the performance of Websockets is not sufficient.
+Sokudo was developed by Giggl for internal purposes where the performance of Websockets is not sufficient.
 The aim is to provide low latency with average abstraction to the user and remaining lightweight, sokudo has no dependencies except the node base modules.
 
 ## Installation
