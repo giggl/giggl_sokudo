@@ -125,7 +125,7 @@ This works by providing the handler with two *middleware* functions, this exampl
       ```
       **Correct**:
       ```js
-        connection.send(handler.op, ["23", "my string value", 56.454546]); // CORRECT
+        connection.send(handler.op, [23, "my string value", 56.454546]); // CORRECT
       ```
       Also note that **At the moment** there is a string length limitation of 2^16-1 due to the fact the string length has to be encoded with the message payload.
     Otherwise there are no limiations or required steps besides that both client and server need to agree to the method of GPACK, further you should pass the options property: `preferGpack: true` to both server and client which can shorten handshake time.
