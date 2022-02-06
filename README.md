@@ -128,7 +128,7 @@ This works by providing the handler with two *middleware* functions, this exampl
         connection.send(handler.op, [23, "my string value", 56.454546]); // CORRECT
       ```
       Also note that **At the moment** there is a string length limitation of 2^16-1 due to the fact the string length has to be encoded with the message payload.
-    Otherwise there are no limiations or required steps besides that both client and server need to agree to the method of GPACK, further you should pass the options property: `preferGpack: true` to both server and client which can shorten handshake time.
+    Otherwise there are no limitations or required steps besides that both client and server need to agree to the method of GPACK, further you should pass the options property: `preferGpack: true` to both server and client which can shorten handshake time.
 
 
 ## API
@@ -217,7 +217,7 @@ const Client = require("./client")
 const client = new Client("localhost", 3015, {
     autoReconnect: true, //should the connection be broken, auto reconnect to the server
     heartbeatInterval: 250, // in millisconds, sends these to make sure the connection is still active, note that if the server sends any message that also counts as a heartbeat refresh.
-    replay: true, // While theres a disconnect, cache messages and replay them to the server noce reconnected, note that for messages send before the 'ready' event, this will be done either way.
+    replay: true, // While theres a disconnect, cache messages and replay them to the server once reconnected, note that for messages send before the 'ready' event, this will be done either way.
 })
 ```
 To use a Handler:
